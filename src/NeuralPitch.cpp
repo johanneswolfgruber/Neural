@@ -11,8 +11,6 @@
 #include <algorithm>
 #include <complex>
 
-#define TEST 0
-
 #ifndef M_PI
 #define	M_PI    3.14159265358979323846  /* pi */
 #endif
@@ -87,7 +85,7 @@ struct NeuralPitcher : Module
     float parabolicInterpolation(float* data, int index);
     float linearInterpolation(float x, float x1, float x2, float y1, float y2);
     int closestIndexAbove(std::vector<float> const& vec, float value);
-    void windowBuffer(float* output, float* input, float* window, const size_t length);
+    void applyWindowToBuffer(float* output, float* input, float* window, const size_t length);
     std::string float2String(float value);
     void writeSetToFile(std::vector<float> input, std::vector<float> output, std::string fileName);
 
@@ -128,7 +126,7 @@ int NeuralPitcher::closestIndexAbove(std::vector<float> const& vec, float value)
     return it - vec.begin();
 }
 
-void NeuralPitcher::windowBuffer(float* output, float* input, float* window, const size_t length)
+void NeuralPitcher::applyWindowToBuffer(float* output, float* input, float* window, const size_t length)
 {
     for (size_t i = 0; i < length; ++i)
     {
@@ -173,7 +171,7 @@ void NeuralPitcher::step() {
 
         if (inputBuffer.full()) {
             float data[BLOCK_SIZE];
-            windowBuffer(data, inputBuffer.data, window, BLOCK_SIZE);
+            applyWindowToBuffer(data, inputBuffer.data, window, BLOCK_SIZE);
             float* work = (float*)pffft_aligned_malloc(sizeof(float) * BLOCK_SIZE);
             pffft_transform_ordered(pffft, data, outputBuffer, NULL, PFFFT_FORWARD);
             pffft_aligned_free(work);
@@ -214,21 +212,6 @@ void NeuralPitcher::step() {
 
     if (recordingFinished)
     {
-#if TEST
-        std::vector<float> outs;
-        std::vector<float> ins;
-        for (int i = 0; i < REC_CV_OUTPUT_SIZE; ++i)
-        {
-            float pIn = recCVOutput[i];
-            float tFreq = 261.626f * powf(2.0f, pIn);
-            std::vector<float> inVec = { log10f(tFreq) };
-            ins.push_back(inVec[0]);
-            outs.push_back(rapidRegression.run(inVec)[0]);
-        }
-        writeOutputToFile(ins, outs, "D:\\Dev\\Rack\\plugins\\Neural\\out.txt");
-#endif
-
-        // float output = rapidRegression.run(inputVec)[0];
         int index = closestIndexAbove(inputVector, input);
 
         float output = 0;
@@ -244,47 +227,6 @@ void NeuralPitcher::step() {
 
         outputs[PITCH_OUTPUT].value = output;
     }
-
-
-    // Implement a simple sine oscillator
-    // float deltaTime = engineGetSampleTime();
-
-    // Compute the frequency from the pitch parameter and input
-    // float pitch = params[REC_PARAM.value;
-    // pitch += inputs[REC_INPUT].value;
-    // pitch = clamp(pitch, -4.0f, 4.0f);
-    // The default pitch is C4
-    // float freq = 261.626f * powf(2.0f, pitch);
-
-    // Accumulate the phase
-    // phase += freq * deltaTime;
-    // if (phase >= 1.0f)
-    //     phase -= 1.0f;
-
-    // Compute the sine output
-    // float sine = sinf(2.0f * M_PI * phase) + sinf(2.0f * M_PI * 2.0f * phase) + sinf(2.0f * M_PI * 3.0f * phase);
-    // outputs[REC_OUTPUT]
-    // PITCH_OUTPUT.value = 5.0f * sine * 0.33f;
-
-    // if (n % 44100 == 0)
-    // {
-    //     std::cout << count << std::endl;
-    // }
-
-    // if (n < 44100)
-    // {
-    //     n++;
-    // }
-    // else
-    // {
-    //     n = 1;
-    // }
-
-    // Blink light at 1Hz
-    // blinkPhase += deltaTime;
-    // if (blinkPhase >= 1.0f)
-    //     blinkPhase -= 1.0f;
-    // lights[BLINK_LIGHT].value = (blinkPhase < 0.5f) ? 1.0f : 0.0f;
 }
 
 struct CenteredLabel : Widget {
@@ -329,8 +271,6 @@ struct NeuralPitcherWidget : ModuleWidget {
 
 	    addOutput(createOutput<PJ301MPort>(Vec(32.9, 260), module, NeuralPitcher::REC_OUTPUT));
 	    addOutput(createOutput<PJ301MPort>(Vec(32.9, 314.1), module, NeuralPitcher::PITCH_OUTPUT));
-
-        // addChild(ModuleLightWidget::create<MediumLight<RedLight>>(Vec(41, 59), module, NeuralPitcher::BLINK_LIGHT));
     }
 };
 
@@ -339,4 +279,8 @@ struct NeuralPitcherWidget : ModuleWidget {
 // author name for categorization per plugin, module slug (should never
 // change), human-readable module name, and any number of tags
 // (found in `include/tags.hpp`) separated by commas.
-Model *neuralPitcher = Model::create<NeuralPitcher, NeuralPitcherWidget>("Johannes Wolfgruber", "NeuralPitcher", "Neural Pitcher", OSCILLATOR_TAG);
+Model *neuralPitcher = Model::create<NeuralPitcher, NeuralPitcherWidget>("Johannes Wolfgruber", 
+                                                                         "NeuralPitcher", 
+                                                                         "Neural Pitcher",
+                                                                         EXTERNAL_TAG,
+                                                                         TUNER_TAG);
