@@ -1,0 +1,10 @@
+/build
+/dist
+/plugin.dylib
+/plugin.dll
+/plugin.so
+.vscode/
+.vscode/*
+.DS_Store
+
+set.txt
