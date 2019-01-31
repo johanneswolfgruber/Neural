@@ -27,7 +27,7 @@ def generate_for_testing():
 
 
 def generate_out_vector():
-  outputVector = np.linspace(-5.0, 5.0, 101, dtype=float)
+  outputVector = np.linspace(-1.6, 5.0, 40, dtype=float)
 
   print("{ ", end='')
   for i in outputVector:
@@ -50,7 +50,7 @@ def generate_midi_to_freq():
 
 
 def main():
-  generate_for_testing()
+  generate_out_vector()
 
 
 if __name__ == "__main__":

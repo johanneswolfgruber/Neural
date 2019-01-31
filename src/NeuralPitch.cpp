@@ -17,7 +17,7 @@
 
 static std::string FREQUENCY_STRING = "";
 static const size_t BLOCK_SIZE = 8192;
-static const int REC_CV_OUTPUT_SIZE = 101;
+static const int REC_CV_OUTPUT_SIZE = 40;
 
 struct NeuralPitcher : Module
 {
@@ -54,7 +54,10 @@ struct NeuralPitcher : Module
     float window[BLOCK_SIZE];
     float currentFreq = 0.0f;
     int currentRecordingIndex = 0;
-    float recCVOutput[REC_CV_OUTPUT_SIZE] = { -5.0f, -4.9f, -4.8f, -4.7f, -4.6f, -4.5f, -4.4f, -4.3f, -4.2f, -4.1f, -4.0f, -3.9f, -3.8f, -3.7f, -3.6f, -3.5f, -3.4f, -3.3f, -3.2f, -3.1f, -3.0f, -2.9f, -2.8f, -2.7f, -2.6f, -2.5f, -2.4f, -2.3f, -2.2f, -2.1f, -2.0f, -1.9f, -1.8f, -1.7f, -1.6f, -1.5f, -1.4f, -1.3f, -1.2f, -1.1f, -1.0f, -0.9f, -0.8f, -0.7f, -0.6f, -0.5f, -0.4f, -0.3f, -0.2f, -0.1f, 0.0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f, 1.9f, 2.0f, 2.1f, 2.2f, 2.3f, 2.4f, 2.5f, 2.6f, 2.7f, 2.8f, 2.9f, 3.0f, 3.1f, 3.2f, 3.3f, 3.4f, 3.5f, 3.6f, 3.7f, 3.8f, 3.9f, 4.0f, 4.1f, 4.2f, 4.3f, 4.4f, 4.5f, 4.6f, 4.7f, 4.8f, 4.9f, 5.0f,  };
+    float recCVOutput[REC_CV_OUTPUT_SIZE] = { -1.6f, -1.4f, -1.3f, -1.1f, -0.9f, -0.8f, -0.6f, -0.4f, -0.2f, -0.1f,
+                                               0.1f,  0.3f,  0.4f,  0.6f,  0.8f,  0.9f,  1.1f,  1.3f,  1.4f,  1.6f, 
+                                               1.8f,  2.0f,  2.1f,  2.3f,  2.5f,  2.6f,  2.8f,  3.0f,  3.1f,  3.3f, 
+                                               3.5f,  3.6f,  3.8f,  4.0f,  4.2f,  4.3f,  4.5f,  4.7f,  4.8f,  5.0f };
     bool record = false;
     bool recordingFinished = false;
     std::vector<float> inputVector;
@@ -91,11 +94,20 @@ struct NeuralPitcher : Module
 
     void step() override;
 
+    void onReset() override;
+
     // For more advanced Module features, read Rack's engine.hpp header file
     // - toJson, fromJson: serialization of internal data
     // - onSampleRateChange: event triggered by a change of sample rate
     // - onReset, onRandomize, onCreate, onDelete: implements special behavior when user clicks these from the context menu
 };
+
+void NeuralPitcher::onReset()
+{
+    record = false;
+    recordingFinished = false;
+    currentRecordingIndex = 0;
+}
 
 
 bool NeuralPitcher::isPositive(float sample)
@@ -201,7 +213,7 @@ void NeuralPitcher::step() {
             {
                 recordingFinished = true;
                 currentRecordingIndex = 0;
-                writeSetToFile(inputVector, outputVector, "D:\\Dev\\Rack\\plugins\\NeuralPitch\\set.txt");
+                writeSetToFile(inputVector, outputVector, "D:\\Dev\\Rack\\plugins\\NeuralPitcher\\set.txt");
             }
         }
     }
@@ -214,7 +226,7 @@ void NeuralPitcher::step() {
     {
         int index = closestIndexAbove(inputVector, input);
 
-        float output = 0;
+        float output = -1.6;
         if(index != 0)
         {
             output = linearInterpolation(targetFreq, 
@@ -222,7 +234,6 @@ void NeuralPitcher::step() {
                                          inputVector[index], 
                                          outputVector[index - 1], 
                                          outputVector[index]);
-
         }
 
         outputs[PITCH_OUTPUT].value = output;
