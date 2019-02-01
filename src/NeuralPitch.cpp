@@ -34,8 +34,7 @@ struct NeuralPitcher : Module
     };
     enum OutputIds 
     {
-        REC_OUTPUT,
-        PITCH_OUTPUT,
+        CV_OUTPUT,
         NUM_OUTPUTS
     };
     enum LightIds 
@@ -170,7 +169,7 @@ void NeuralPitcher::step() {
     if (!record)
     {
         FREQUENCY_STRING = "REC OFF";
-        outputs[REC_OUTPUT].value = recCVOutput[0];
+        outputs[CV_OUTPUT].value = recCVOutput[0];
     }
 
     if (record && inputs[REC_INPUT].active && !recordingFinished)
@@ -207,7 +206,7 @@ void NeuralPitcher::step() {
                 inputVector.push_back(currentFreq);
                 outputVector.push_back(recCVOutput[currentRecordingIndex]);
                 currentRecordingIndex++;
-                outputs[REC_OUTPUT].value = recCVOutput[currentRecordingIndex];
+                outputs[CV_OUTPUT].value = recCVOutput[currentRecordingIndex];
             }
             else
             {
@@ -236,7 +235,7 @@ void NeuralPitcher::step() {
                                          outputVector[index]);
         }
 
-        outputs[PITCH_OUTPUT].value = output;
+        outputs[CV_OUTPUT].value = output;
     }
 }
 
@@ -262,9 +261,28 @@ struct CenteredLabel : Widget {
     }
 };
 
+struct PJ301MPortIn : SVGPort {
+	PJ301MPortIn() {
+		setSVG(SVG::load(assetPlugin(plugin, "res/PJ301Min.svg")));
+	}
+};
+
+struct PJ301MPortOut : SVGPort {
+	PJ301MPortOut() {
+		setSVG(SVG::load(assetPlugin(plugin, "res/PJ301Mout.svg")));
+	}
+};
+
+struct RoundSwitch : SVGSwitch, ToggleSwitch {
+	RoundSwitch() {
+		addFrame(SVG::load(assetPlugin(plugin, "res/Switch0.svg")));
+		addFrame(SVG::load(assetPlugin(plugin, "res/Switch1.svg")));
+	}
+};
+
 struct NeuralPitcherWidget : ModuleWidget {
     NeuralPitcherWidget(NeuralPitcher *module) : ModuleWidget(module) {
-        setPanel(SVG::load(assetPlugin(plugin, "res/NeuralPitch.svg")));
+        setPanel(SVG::load(assetPlugin(plugin, "res/NeuralPitcher.svg")));
 
         CenteredLabel* const label = new CenteredLabel(12);
         label->box.pos = Vec(22, 60);
@@ -275,13 +293,20 @@ struct NeuralPitcherWidget : ModuleWidget {
         addChild(Widget::create<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(Widget::create<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParam<CKSS>(Vec(38, 60), module, NeuralPitcher::REC_PARAM, 0.0, 1.0, 0.0));
+        // addParam(createParam<CKSS>(Vec(38, 60), module, NeuralPitcher::REC_PARAM, 0.0, 1.0, 0.0));
 
-	    addInput(createInput<PJ301MPort>(Vec(32.9, 140), module, NeuralPitcher::REC_INPUT));
-	    addInput(createInput<PJ301MPort>(Vec(32.9, 195), module, NeuralPitcher::PITCH_INPUT));
+	    // addInput(createInput<PJ301MPort>(Vec(32.9, 140), module, NeuralPitcher::REC_INPUT));
+	    // addInput(createInput<PJ301MPort>(Vec(32.9, 195), module, NeuralPitcher::PITCH_INPUT));
 
-	    addOutput(createOutput<PJ301MPort>(Vec(32.9, 260), module, NeuralPitcher::REC_OUTPUT));
-	    addOutput(createOutput<PJ301MPort>(Vec(32.9, 314.1), module, NeuralPitcher::PITCH_OUTPUT));
+	    // addOutput(createOutput<PJ301MPort>(Vec(32.9, 260), module, NeuralPitcher::REC_OUTPUT));
+	    // addOutput(createOutput<PJ301MPort>(Vec(32.9, 314.1), module, NeuralPitcher::CV_OUTPUT));
+
+        addParam(createParam<RoundSwitch>(Vec(33.5, 43), module, NeuralPitcher::REC_PARAM, 0.0, 1.0, 0.0));
+
+	    addInput(createInput<PJ301MPortIn>(Vec(33.5, 143), module, NeuralPitcher::REC_INPUT));
+	    addInput(createInput<PJ301MPortIn>(Vec(33.5, 203), module, NeuralPitcher::PITCH_INPUT));
+
+	    addOutput(createOutput<PJ301MPortOut>(Vec(33.5, 303), module, NeuralPitcher::CV_OUTPUT));
     }
 };
 
@@ -295,3 +320,4 @@ Model *neuralPitcher = Model::create<NeuralPitcher, NeuralPitcherWidget>("Johann
                                                                          "Neural Pitcher",
                                                                          EXTERNAL_TAG,
                                                                          TUNER_TAG);
+

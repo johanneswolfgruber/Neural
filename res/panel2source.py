@@ -71,7 +71,7 @@ lights = []
 groups = root.findall(".//{http://www.w3.org/2000/svg}g")
 eprint("Found %d groups" % len(groups))
 for group in groups:
-	label = group.get("id")
+	label = group.get("{http://www.inkscape.org/namespaces/inkscape}label")
 	if label == 'widgets':
 		rects = group.findall(".//{http://www.w3.org/2000/svg}rect")
 		eprint("Found %d rects in layer called widgets" % len(rects))
@@ -81,20 +81,22 @@ for group in groups:
 				label = rect.get('id')
 				eprint("Warning: %s has no label, using id" % label)
 			id = slugize(label).upper()
-			color = rect.get('fill')
+			style = rect.get('style')
+			color_match = re.search(r'fill:\S*#(.{6});', style)
+			color = color_match.group(1)
 			x = float(rect.get('x')) * scale
 			y = float(rect.get('y')) * scale
 			x = round(x, 3)
 			y = round(y, 3)
 			widget = {'id': id, 'x': x, 'y': y, 'color': color}
 			eprint(widget)
-			if color == 'rgb(255,0,0)': # Red
+			if color == 'ff0000': # Red
 				params.append(widget)
-			if color == 'rgb(0,255,0)': # Green
+			if color == '00ff00': # Green
 				inputs.append(widget)
-			if color == 'rgb(0,0,255)': # Blue
+			if color == '0000ff': # Blue
 				outputs.append(widget)
-			if color == 'rgb(255,0,255)': # Magenta
+			if color == 'ff00ff': # Magenta
 				lights.append(widget)
 
 params = sorted(params, key=lambda widget: widget['y'])
