@@ -1,4 +1,4 @@
-#include "NeuralPitcher.hpp"
+#include "Neural.hpp"
 #include "dsp/ringbuffer.hpp"
 #include "dsp/frame.hpp"
 #include "dsp/fir.hpp"
@@ -106,6 +106,9 @@ void NeuralPitcher::onReset()
     record = false;
     recordingFinished = false;
     currentRecordingIndex = 0;
+    inputVector.clear();
+    outputVector.clear();
+    inputBuffer.clear();
 }
 
 
@@ -176,11 +179,13 @@ void NeuralPitcher::step() {
     {
         float input = inputs[REC_INPUT].value;
 
-        if (!inputBuffer.full()) {
+        if (!inputBuffer.full())
+        {
             inputBuffer.push(input);
         }
 
-        if (inputBuffer.full()) {
+        if (inputBuffer.full())
+        {
             float data[BLOCK_SIZE];
             applyWindowToBuffer(data, inputBuffer.data, window, BLOCK_SIZE);
             float* work = (float*)pffft_aligned_malloc(sizeof(float) * BLOCK_SIZE);
@@ -188,7 +193,8 @@ void NeuralPitcher::step() {
             pffft_aligned_free(work);
 
             int j = 0;
-            for (size_t i = 0; i < BLOCK_SIZE * 2 - 1; i += 2) {
+            for (size_t i = 0; i < BLOCK_SIZE * 2 - 1; i += 2)
+            {
                 std::complex<float> z(outputBuffer[i], outputBuffer[i + 1]);
                 data[j] = std::abs(z) / BLOCK_SIZE;
                 j++;
@@ -292,14 +298,6 @@ struct NeuralPitcherWidget : ModuleWidget {
         addChild(Widget::create<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
         addChild(Widget::create<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(Widget::create<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-        // addParam(createParam<CKSS>(Vec(38, 60), module, NeuralPitcher::REC_PARAM, 0.0, 1.0, 0.0));
-
-	    // addInput(createInput<PJ301MPort>(Vec(32.9, 140), module, NeuralPitcher::REC_INPUT));
-	    // addInput(createInput<PJ301MPort>(Vec(32.9, 195), module, NeuralPitcher::PITCH_INPUT));
-
-	    // addOutput(createOutput<PJ301MPort>(Vec(32.9, 260), module, NeuralPitcher::REC_OUTPUT));
-	    // addOutput(createOutput<PJ301MPort>(Vec(32.9, 314.1), module, NeuralPitcher::CV_OUTPUT));
 
         addParam(createParam<RoundSwitch>(Vec(33.5, 43), module, NeuralPitcher::REC_PARAM, 0.0, 1.0, 0.0));
 
