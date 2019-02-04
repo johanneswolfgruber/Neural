@@ -267,25 +267,6 @@ struct CenteredLabel : Widget {
     }
 };
 
-struct PJ301MPortIn : SVGPort {
-	PJ301MPortIn() {
-		setSVG(SVG::load(assetPlugin(plugin, "res/PJ301Min.svg")));
-	}
-};
-
-struct PJ301MPortOut : SVGPort {
-	PJ301MPortOut() {
-		setSVG(SVG::load(assetPlugin(plugin, "res/PJ301Mout.svg")));
-	}
-};
-
-struct RoundSwitch : SVGSwitch, ToggleSwitch {
-	RoundSwitch() {
-		addFrame(SVG::load(assetPlugin(plugin, "res/Switch0.svg")));
-		addFrame(SVG::load(assetPlugin(plugin, "res/Switch1.svg")));
-	}
-};
-
 struct NeuralPitcherWidget : ModuleWidget {
     NeuralPitcherWidget(NeuralPitcher *module) : ModuleWidget(module) {
         setPanel(SVG::load(assetPlugin(plugin, "res/NeuralPitcher.svg")));

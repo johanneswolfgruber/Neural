@@ -13,6 +13,10 @@ struct Audio16DriverItem : MenuItem {
 };
 
 struct Audio16DriverChoice : LedDisplayChoice {
+	Audio16DriverChoice()
+	{
+		color = nvgRGB(0x44, 0xaa, 0x00);
+	}
 	Audio16Widget *audio16Widget;
 	void onAction(EventAction &e) override {
 		Menu *menu = gScene->createMenu();
@@ -42,6 +46,10 @@ struct Audio16DeviceItem : MenuItem {
 };
 
 struct Audio16DeviceChoice : LedDisplayChoice {
+	Audio16DeviceChoice()
+	{
+		color = nvgRGB(0x44, 0xaa, 0x00);
+	}
 	Audio16Widget *audio16Widget;
 	/** Prevents devices with a ridiculous number of channels from being displayed */
 	int maxTotalChannels = 128;
@@ -93,6 +101,10 @@ struct Audio16SampleRateItem : MenuItem {
 };
 
 struct Audio16SampleRateChoice : LedDisplayChoice {
+	Audio16SampleRateChoice()
+	{
+		color = nvgRGB(0x44, 0xaa, 0x00);
+	}
 	Audio16Widget *audio16Widget;
 	void onAction(EventAction &e) override {
 		Menu *menu = gScene->createMenu();
@@ -125,6 +137,10 @@ struct Audio16BlockSizeItem : MenuItem {
 };
 
 struct Audio16BlockSizeChoice : LedDisplayChoice {
+	Audio16BlockSizeChoice()
+	{
+		color = nvgRGB(0x44, 0xaa, 0x00);
+	}
 	Audio16Widget *audio16Widget;
 	void onAction(EventAction &e) override {
 		Menu *menu = gScene->createMenu();
