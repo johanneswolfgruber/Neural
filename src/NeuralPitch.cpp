@@ -11,11 +11,15 @@
 #include <algorithm>
 #include <complex>
 
-static const size_t BLOCK_SIZE = 8192;
-static const int REC_CV_OUTPUT_SIZE = 40;
+#ifndef M_PI
+#define M_PI   3.14159265358979323846264338327950288
+#endif
 
 struct NeuralPitcher : Module
 {
+    static const size_t BLOCK_SIZE = 8192;
+    static const int REC_CV_OUTPUT_SIZE = 40;
+
     enum ParamIds
     {
         REC_PARAM,
@@ -38,14 +42,8 @@ struct NeuralPitcher : Module
         NUM_LIGHTS
     };
 
-    float phase = 0.0;
-    float blinkPhase = 0.0;
-
-
-    PFFFT_Setup *pffft;
-    DoubleRingBuffer<float, BLOCK_SIZE> inputBuffer;
+    RingBuffer<float, BLOCK_SIZE> inputBuffer;
     float outputBuffer[BLOCK_SIZE * 2];
-    float window[BLOCK_SIZE];
     float currentFreq = 0.0f;
     int currentRecordingIndex = 0;
     float recCVOutput[REC_CV_OUTPUT_SIZE] = { -1.6f, -1.4f, -1.3f, -1.1f, -0.9f, -0.8f, -0.6f, -0.4f, -0.2f, -0.1f,
@@ -58,11 +56,11 @@ struct NeuralPitcher : Module
     std::vector<float> outputVector;
 
     std::string displayText = "";
+    PFFFT_Setup *pffft;
 
     NeuralPitcher() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS)
     {
         pffft = pffft_new_setup(BLOCK_SIZE, PFFFT_REAL);
-        blackmanHarrisWindow(window, BLOCK_SIZE);
     }
 
     ~NeuralPitcher() {
@@ -73,7 +71,6 @@ struct NeuralPitcher : Module
     float parabolicInterpolation(float* data, int index);
     float linearInterpolation(float x, float x1, float x2, float y1, float y2);
     int closestIndexAbove(std::vector<float> const& vec, float value);
-    void applyWindowToBuffer(float* output, float* input, float* window, const size_t length);
     std::string float2String(float value);
     void writeSetToFile(std::vector<float> input, std::vector<float> output, std::string fileName);
 
@@ -105,8 +102,9 @@ bool NeuralPitcher::isPositive(float sample)
 
 float NeuralPitcher::parabolicInterpolation(float* data, int index)
 {
-    float xv = (data[index + 1] - data[index - 1]) 
-        / (2 * (2 * data[index] - data[index + 1] - data[index - 1]));
+    float n = (data[index + 1] - data[index - 1]);
+    float d = (2 * (2 * data[index] - data[index + 1] - data[index - 1]));
+    float xv = n / d;
     return xv + index;
 }
 
@@ -124,14 +122,6 @@ int NeuralPitcher::closestIndexAbove(std::vector<float> const& vec, float value)
     if (it == vec.end()) { return vec.size() - 1; }
 
     return it - vec.begin();
-}
-
-void NeuralPitcher::applyWindowToBuffer(float* output, float* input, float* window, const size_t length)
-{
-    for (size_t i = 0; i < length; ++i)
-    {
-        output[i] = window[i] * input[i];
-    }
 }
 
 std::string NeuralPitcher::float2String(float value)
@@ -173,11 +163,9 @@ void NeuralPitcher::step() {
         if (inputBuffer.full())
         {
             float data[BLOCK_SIZE];
-            applyWindowToBuffer(data, inputBuffer.data, window, BLOCK_SIZE);
-            // float* work = (float*)pffft_aligned_malloc(sizeof(float) * BLOCK_SIZE);
-            pffft_transform_ordered(pffft, data, outputBuffer, NULL, PFFFT_FORWARD);
-            // pffft_aligned_free(work);
-
+            blackmanHarrisWindow(inputBuffer.data, BLOCK_SIZE);
+            pffft_transform_ordered(pffft, inputBuffer.data, outputBuffer, NULL, PFFFT_FORWARD);
+            
             int j = 0;
             for (size_t i = 0; i < BLOCK_SIZE * 2 - 1; i += 2)
             {
