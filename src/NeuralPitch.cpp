@@ -11,11 +11,6 @@
 #include <algorithm>
 #include <complex>
 
-#ifndef M_PI
-#define	M_PI    3.14159265358979323846  /* pi */
-#endif
-
-static std::string FREQUENCY_STRING = "";
 static const size_t BLOCK_SIZE = 8192;
 static const int REC_CV_OUTPUT_SIZE = 40;
 
@@ -48,7 +43,7 @@ struct NeuralPitcher : Module
 
 
     PFFFT_Setup *pffft;
-    RingBuffer<float, BLOCK_SIZE> inputBuffer;
+    DoubleRingBuffer<float, BLOCK_SIZE> inputBuffer;
     float outputBuffer[BLOCK_SIZE * 2];
     float window[BLOCK_SIZE];
     float currentFreq = 0.0f;
@@ -62,20 +57,11 @@ struct NeuralPitcher : Module
     std::vector<float> inputVector;
     std::vector<float> outputVector;
 
-    // for testing
-    float sine[BLOCK_SIZE];
+    std::string displayText = "";
 
     NeuralPitcher() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS)
     {
         pffft = pffft_new_setup(BLOCK_SIZE, PFFFT_REAL);
-
-        // for testing
-        for (size_t i = 0; i < BLOCK_SIZE; ++i)
-        {
-            window[i] = 1.0f;
-            sine[i] = sinf(2.0f * M_PI * (250.0f / 44100.0f) * i);
-        }
-
         blackmanHarrisWindow(window, BLOCK_SIZE);
     }
 
@@ -171,7 +157,7 @@ void NeuralPitcher::step() {
 
     if (!record)
     {
-        FREQUENCY_STRING = "REC OFF";
+        displayText = "REC OFF";
         outputs[CV_OUTPUT].value = recCVOutput[0];
     }
 
@@ -188,9 +174,9 @@ void NeuralPitcher::step() {
         {
             float data[BLOCK_SIZE];
             applyWindowToBuffer(data, inputBuffer.data, window, BLOCK_SIZE);
-            float* work = (float*)pffft_aligned_malloc(sizeof(float) * BLOCK_SIZE);
+            // float* work = (float*)pffft_aligned_malloc(sizeof(float) * BLOCK_SIZE);
             pffft_transform_ordered(pffft, data, outputBuffer, NULL, PFFFT_FORWARD);
-            pffft_aligned_free(work);
+            // pffft_aligned_free(work);
 
             int j = 0;
             for (size_t i = 0; i < BLOCK_SIZE * 2 - 1; i += 2)
@@ -203,7 +189,7 @@ void NeuralPitcher::step() {
             int argmax = std::distance(data, std::max_element(data, data + BLOCK_SIZE));
             float realMax = parabolicInterpolation(data, argmax);
             currentFreq = (engineGetSampleRate() / BLOCK_SIZE) * realMax;
-            FREQUENCY_STRING = float2String(floorf(currentFreq * 100) / 100);
+            displayText = float2String(currentFreq);
 
             inputBuffer.clear();
 
@@ -218,7 +204,8 @@ void NeuralPitcher::step() {
             {
                 recordingFinished = true;
                 currentRecordingIndex = 0;
-                writeSetToFile(inputVector, outputVector, "D:\\Dev\\Rack\\plugins\\NeuralPitcher\\set.txt");
+                displayText = "CALI";
+                writeSetToFile(inputVector, outputVector, "D:\\Dev\\Rack\\plugins\\Neural\\set.txt");
             }
         }
     }
@@ -249,11 +236,13 @@ struct CenteredLabel : Widget {
     std::string text;
     int fontSize;
     std::shared_ptr<Font> font;
+    NeuralPitcher *module;
 
-    CenteredLabel(int _fontSize = 12) {
+    CenteredLabel(NeuralPitcher *module, int _fontSize = 12) {
         fontSize = _fontSize;
         box.size.y = BND_WIDGET_HEIGHT;
         font = Font::load(assetPlugin(plugin, "res/DSEG14Classic-Regular.ttf"));
+        this->module = module;
     }
     void draw(NVGcontext *vg) override {
         nvgFontFaceId(vg, font->handle);
@@ -261,9 +250,10 @@ struct CenteredLabel : Widget {
         nvgFillColor(vg, nvgRGB(0, 0, 0));
         nvgFontSize(vg, fontSize);
 
-        text = FREQUENCY_STRING;
-
         nvgText(vg, box.pos.x, box.pos.y, text.c_str(), NULL);
+    }
+    void step() override {
+        text = module->displayText;
     }
 };
 
@@ -271,7 +261,7 @@ struct NeuralPitcherWidget : ModuleWidget {
     NeuralPitcherWidget(NeuralPitcher *module) : ModuleWidget(module) {
         setPanel(SVG::load(assetPlugin(plugin, "res/NeuralPitcher.svg")));
 
-        CenteredLabel* const label = new CenteredLabel(12);
+        CenteredLabel* const label = new CenteredLabel(module, 12);
         label->box.pos = Vec(22, 60);
         addChild(label);
 
