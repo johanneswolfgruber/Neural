@@ -258,12 +258,12 @@ struct NeuralPitcherWidget : ModuleWidget {
         addChild(Widget::create<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(Widget::create<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParam<RoundSwitch>(Vec(33.5, 43), module, NeuralPitcher::REC_PARAM, 0.0, 1.0, 0.0));
+        addParam(createParam<RoundSwitch>(mm2px(Vec(11.134, 128.5 - 106.0 - 8.212)), module, NeuralPitcher::REC_PARAM, 0.0, 1.0, 0.0));
 
-	    addInput(createInput<PJ301MPortIn>(Vec(33.5, 143), module, NeuralPitcher::REC_INPUT));
-	    addInput(createInput<PJ301MPortIn>(Vec(33.5, 203), module, NeuralPitcher::PITCH_INPUT));
+	    addInput(createInput<PJ301MPortIn>(mm2px(Vec(11.134, 128.5 - 69.0 - 8.212)), module, NeuralPitcher::REC_INPUT));
+	    addInput(createInput<PJ301MPortIn>(mm2px(Vec(11.134, 128.5 - 50.0 - 8.212)), module, NeuralPitcher::PITCH_INPUT));
 
-	    addOutput(createOutput<PJ301MPortOut>(Vec(33.5, 303), module, NeuralPitcher::CV_OUTPUT));
+	    addOutput(createOutput<PJ301MPortOut>(mm2px(Vec(11.134, 128.5 - 28.0 - 8.212)), module, NeuralPitcher::CV_OUTPUT));
     }
 };
 

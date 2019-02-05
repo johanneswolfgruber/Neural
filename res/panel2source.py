@@ -162,25 +162,25 @@ void %s::step() {
 if len(params) > 0:
 	print("")
 for w in params:
-	print("	addParam(createParam<Davies1900hBlackKnob>(Vec(%g, %g), module, %s::%s_PARAM, 0.0, 1.0, 0.0));" % (w['x'], w['y'], slug, w['id']))
+	print("	addParam(createParam<Davies1900hBlackKnob>(mm2px(Vec(%g, %g)), module, %s::%s_PARAM, 0.0, 1.0, 0.0));" % (w['x'], w['y'], slug, w['id']))
 
 # Inputs
 if len(inputs) > 0:
 	print("")
 for w in inputs:
-	print("	addInput(createInput<PJ301MPort>(Vec(%g, %g), module, %s::%s_INPUT));" % (w['x'], w['y'], slug, w['id']))
+	print("	addInput(createInput<PJ301MPort>(mm2px(Vec(%g, %g)), module, %s::%s_INPUT));" % (w['x'], w['y'], slug, w['id']))
 
 # Outputs
 if len(outputs) > 0:
 	print("")
 for w in outputs:
-	print("	addOutput(createOutput<PJ301MPort>(Vec(%g, %g), module, %s::%s_OUTPUT));" % (w['x'], w['y'], slug, w['id']))
+	print("	addOutput(createOutput<PJ301MPort>(mm2px(Vec(%g, %g)), module, %s::%s_OUTPUT));" % (w['x'], w['y'], slug, w['id']))
 
 # Lights
 if len(lights) > 0:
 	print("")
 for w in lights:
-	print("	addChild(createLight<RedLight>(Vec(%g, %g), module, %s::%s_LIGHT));" % (w['x'], w['y'], slug, w['id']))
+	print("	addChild(createLight<RedLight>(mm2px(Vec(%g, %g)), module, %s::%s_LIGHT));" % (w['x'], w['y'], slug, w['id']))
 
 
 print("}")
